@@ -20,6 +20,9 @@ jobs:
   test:
     needs: build
     uses: violabs/public-cicd/.github/workflows/gradle-unit-tests.yml@main
+    permissions:
+      contents: read
+      pull-requests: write
     with:
       java-version: '21'
       coverage-enabled: true
