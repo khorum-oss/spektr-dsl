@@ -9,7 +9,7 @@ plugins {
 	kotlin("plugin.spring") version "2.3.0"
 	id("org.springframework.boot") version "4.1.0-M1"
 	id("io.spring.dependency-management") version "1.1.7"
-	id("io.gitlab.arturbosch.detekt") version "1.23.8"
+	id("dev.detekt") version "2.0.0-alpha.2"
 	id("org.jetbrains.dokka") version "1.9.20"
 	id("org.jetbrains.kotlinx.kover") version "0.7.6"
 	id("org.khorum.oss.plugins.open.publishing.maven-generated-artifacts") version "1.0.0"
@@ -100,6 +100,6 @@ detekt {
 	buildUponDefaultConfig = true
 	allRules = false
 	config.setFrom(files("$rootDir/detekt.yml"))
-	baseline = file("$rootDir/detekt-baseline.xml")
+	source.setFrom("src/main/kotlin")
 	parallel = true
 }

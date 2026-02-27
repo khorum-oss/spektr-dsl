@@ -74,6 +74,7 @@ class Soap12FaultBuilder : SoapFaultBuilder() {
      */
     override fun role(role: String) { this.role = role }
 
+    @Suppress("CyclomaticComplexMethod")
     override fun serializeFaultContent(sb: StringBuilder, prefix: String, pretty: Boolean, indent: String, depth: Int) {
         code?.let { c ->
             sb.append(indent.repeat(depth))
@@ -113,7 +114,14 @@ class Soap12FaultBuilder : SoapFaultBuilder() {
         serializeDetail(sb, prefix, usePrefixedDetail = true, pretty, indent, depth)
     }
 
-    private fun serializeSubcodes(sb: StringBuilder, subcodes: List<String>, prefix: String, pretty: Boolean, indent: String, depth: Int) {
+    private fun serializeSubcodes(
+        sb: StringBuilder,
+        subcodes: List<String>,
+        prefix: String,
+        pretty: Boolean,
+        indent: String,
+        depth: Int
+    ) {
         if (subcodes.isEmpty()) return
         sb.append(indent.repeat(depth))
         sb.append("<$prefix:Subcode>")

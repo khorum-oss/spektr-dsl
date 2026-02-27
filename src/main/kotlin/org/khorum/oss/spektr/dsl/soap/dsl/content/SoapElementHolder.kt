@@ -10,6 +10,7 @@ import org.khorum.oss.spektr.dsl.soap.dsl.SoapDslMarker
  * [SoapHeaderBuilder][org.khorum.oss.spektr.dsl.soap.dsl.SoapHeaderBuilder], and
  * [SoapBodyBuilder][org.khorum.oss.spektr.dsl.soap.dsl.body.SoapBodyBuilder].
  */
+@Suppress("TooManyFunctions")
 abstract class SoapElementHolder {
     /** Attributes to be rendered on this element. */
     protected val attributes: MutableMap<String, String> = mutableMapOf()
