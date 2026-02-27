@@ -1,5 +1,9 @@
 package org.khorum.oss.spektr.dsl.rest
 
+private const val OK_STATUS = 200
+private const val BAD_REQUEST_STATUS = 400
+private const val NOT_FOUND_STATUS = 404
+
 /**
  * Represents an HTTP response from a dynamic endpoint handler.
  *
@@ -11,7 +15,7 @@ package org.khorum.oss.spektr.dsl.rest
  * @property body The response body, which can be any type and will be serialized appropriately.
  */
 data class DynamicResponse(
-    val status: Int = 200,
+    val status: Int = OK_STATUS,
     val headers: Map<String, String> = emptyMap(),
     val body: Any? = null
 ) {
@@ -32,7 +36,7 @@ data class DynamicResponse(
      */
     class Builder {
         /** The HTTP status code for the response. */
-        var status: Int = 200
+        var status: Int = OK_STATUS
         private val headers: MutableMap<String, String> = mutableMapOf()
         /** The response body content. */
         var body: Any? = null
@@ -94,7 +98,7 @@ data class DynamicResponse(
             fun badRequest(check: Boolean, errorBody: Any? = null) {
                 if (!failure && check) {
                     failure = true
-                    status = 400
+                    status = BAD_REQUEST_STATUS
                     body = errorBody
                 }
             }
@@ -108,7 +112,7 @@ data class DynamicResponse(
             fun notFound(check: Boolean, errorBody: Any? = null) {
                 if (!failure && check) {
                     failure = true
-                    status = 404
+                    status = NOT_FOUND_STATUS
                     body = errorBody
                 }
             }
@@ -121,7 +125,7 @@ data class DynamicResponse(
              */
             fun ok(successBody: Any? = null, check: Boolean = true) {
                 if (!failure && check) {
-                    status = 200
+                    status = OK_STATUS
                     body = successBody
                 }
             }

@@ -48,6 +48,7 @@ class Soap11FaultBuilder : SoapFaultBuilder() {
      */
     override fun faultActor(actor: String) { faultActor = actor }
 
+    @Suppress("CyclomaticComplexMethod")
     override fun serializeFaultContent(sb: StringBuilder, prefix: String, pretty: Boolean, indent: String, depth: Int) {
         faultCode?.let {
             sb.append(indent.repeat(depth))

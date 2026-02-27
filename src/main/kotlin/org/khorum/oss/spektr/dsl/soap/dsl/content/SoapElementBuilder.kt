@@ -63,6 +63,7 @@ class SoapElementBuilder(
      * @param indent The indentation string.
      * @param depth The current nesting depth.
      */
+    @Suppress("CyclomaticComplexMethod")
     internal fun serialize(sb: StringBuilder, pretty: Boolean, indent: String, depth: Int) {
         val n = name ?: return
 

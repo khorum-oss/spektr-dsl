@@ -16,6 +16,7 @@ import org.khorum.oss.spektr.dsl.soap.dsl.fault.SoapFaultScope
  *
  * Methods for the wrong SOAP version will throw [IllegalStateException].
  */
+@Suppress("TooManyFunctions")
 sealed class SoapFaultBuilder : SoapBodyContent, SoapFaultScope {
     /** Optional detail element containing application-specific error information. */
     protected var detail: SoapElementBuilder? = null
