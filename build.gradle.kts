@@ -11,6 +11,7 @@ plugins {
 	id("io.spring.dependency-management") version "1.1.7"
 	id("dev.detekt") version "2.0.0-alpha.2"
 	id("org.jetbrains.dokka") version "2.1.0"
+	id("org.jetbrains.dokka-javadoc") version "2.1.0"
 	id("org.jetbrains.kotlinx.kover") version "0.7.6"
 	id("org.khorum.oss.plugins.open.publishing.maven-generated-artifacts") version "1.0.0"
 	id("org.khorum.oss.plugins.open.publishing.digital-ocean-spaces") version "1.0.0"
@@ -24,6 +25,14 @@ version = file("VERSION").readText().trim()
 // Root project is not a Spring Boot application
 tasks.bootJar { enabled = false }
 tasks.jar { enabled = false }
+
+// Bridge Dokka v1 task names to v2 for maven-generated-artifacts plugin compatibility
+tasks.register("dokkaJavadoc") {
+	dependsOn("dokkaGeneratePublicationJavadoc")
+}
+tasks.register("dokkaHtml") {
+	dependsOn("dokkaGeneratePublicationHtml")
+}
 
 repositories {
 	mavenCentral()
