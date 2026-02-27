@@ -21,50 +21,65 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  bump-version:
+  version:
     if: >-
       github.event_name == 'push' ||
-      (github.event.inputs.bump-version == 'true' && github.event.inputs.custom-version == '')
-    uses: violabs/public-cicd/.github/workflows/version-bump.yml@main
-    with:
-      version-file: 'VERSION'
-      bump-type: 'patch'
-    permissions:
-      contents: write
-    secrets:
-      GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  set-custom-version:
-    if: github.event.inputs.custom-version != ''
+      github.event.inputs.bump-version == 'true' ||
+      github.event.inputs.custom-version != ''
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
+      - name: Generate App Token
+        uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ vars.VERSION_BOT_APP_ID }}
+          private-key: ${{ secrets.VERSION_BOT_PRIVATE_KEY }}
+
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          ref: main
+          fetch-depth: 0
 
-      - name: Set custom version
-        env:
-          CUSTOM_VERSION: ${{ github.event.inputs.custom-version }}
-        run: echo "$CUSTOM_VERSION" > VERSION
-
-      - name: Commit & push version
+      - name: Determine version
+        id: version
         env:
           CUSTOM_VERSION: ${{ github.event.inputs.custom-version }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          OLD_VERSION=$(cat VERSION)
+          if [ -n "$CUSTOM_VERSION" ]; then
+            echo "$CUSTOM_VERSION" > VERSION
+            echo "new_version=$CUSTOM_VERSION" >> "$GITHUB_OUTPUT"
+          else
+            IFS='.' read -r major minor patch <<< "$OLD_VERSION"
+            patch=$((patch + 1))
+            NEW_VERSION="${major}.${minor}.${patch}"
+            echo "$NEW_VERSION" > VERSION
+            echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          fi
+          echo "old_version=$OLD_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Commit & push
+        env:
+          NEW_VERSION: ${{ steps.version.outputs.new_version }}
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+        run: |
+          git config user.name "${APP_SLUG}[bot]"
+          git config user.email "${APP_SLUG}[bot]@users.noreply.github.com"
           git add VERSION
-          git diff --cached --quiet && echo "Version already set" && exit 0
-          git commit -m "chore: set version to ${CUSTOM_VERSION} [skip ci]"
-          git push
+          git diff --cached --quiet && echo "No version change" && exit 0
+          git commit -m "chore: bump version to ${NEW_VERSION} [skip ci]"
+          git push origin HEAD:main
 
   publish:
-    needs: [bump-version, set-custom-version]
+    needs: version
     if: always() && !failure() && !cancelled()
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout with updated version
+      - name: Checkout latest
         uses: actions/checkout@v4
         with:
           ref: main
