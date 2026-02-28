@@ -7,11 +7,18 @@ A Kotlin DSL library for defining REST and SOAP endpoints. Used by the [Spektr](
 
 ## Installation
 
-Add the dependency to your `build.gradle.kts`:
+Add the repository and dependency to your `build.gradle.kts`:
 
 ```kotlin
+repositories {
+    mavenCentral()
+    maven {
+        url = uri("https://open-reliquary.nyc3.cdn.digitaloceanspaces.com")
+    }
+}
+
 dependencies {
-    implementation("org.khorum.oss.spektr:spektr-dsl:1.0.0")
+    implementation("org.khorum.oss.spektr:spektr-dsl:1.0.7")
 }
 ```
 
@@ -187,7 +194,78 @@ val envelope = soapEnvelope {
 println(envelope.toPrettyString())
 ```
 
-The builder supports SOAP 1.1 and 1.2, including fault responses with nested sub-codes.
+The default SOAP version is `V1_2`. The builder supports SOAP 1.1 and 1.2.
+
+### Element Features
+
+Elements support attributes, CDATA, raw XML, and conditional rendering:
+
+```kotlin
+body {
+    element("ns:User") {
+        attribute("id", "123")
+        element("name") { content = "John Doe" }
+        element("bio") { cdata = "Likes <coding> & 'testing'" }
+        element("notes") { rawXml = "<custom>pre-built XML</custom>" }
+    }
+
+    // Optional elements are omitted when empty
+    optional("ns:nickname") { }
+
+    // Nillable elements render as <middleName xsi:nil="true"/> when empty
+    nillable("ns:middleName") { }
+
+    // List containers for repeating elements
+    list("users") {
+        element("user") { content = "Alice" }
+        element("user") { content = "Bob" }
+    }
+}
+```
+
+### SOAP Fault Responses
+
+Build fault responses using the `fault` block on the envelope (mutually exclusive with `body`):
+
+**SOAP 1.2 Fault:**
+
+```kotlin
+soapEnvelope {
+    fault {
+        code {
+            value("env:Sender")
+            subcode("ns:InvalidInput")
+        }
+        reason {
+            text = "Invalid request parameters"
+            lang = "en"
+        }
+        node("http://example.com/service")
+        role("http://example.com/role")
+        detail {
+            element("ns:errorCode") { content = "ERR_400" }
+        }
+    }
+}
+```
+
+**SOAP 1.1 Fault:**
+
+```kotlin
+soapEnvelope {
+    version = SoapVersion.V1_1
+    fault {
+        faultCode("soap:Server")
+        faultString("Internal server error")
+        faultActor("http://example.com/service")
+        detail {
+            element("errorCode") { content = "ERR_500" }
+        }
+    }
+}
+```
+
+Faults can also be added inside a `body` block alongside other elements.
 
 ## License
 
