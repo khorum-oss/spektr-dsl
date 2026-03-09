@@ -1,5 +1,6 @@
 package org.khorum.oss.spektr.dsl.soap.dsl.body
 
+import org.khorum.oss.spektr.dsl.soap.dsl.TransformXml
 import org.khorum.oss.spektr.dsl.soap.dsl.content.SoapElementBuilder
 import org.khorum.oss.spektr.dsl.soap.dsl.fault.SoapFaultCode
 import org.khorum.oss.spektr.dsl.soap.dsl.fault.SoapFaultReason
@@ -8,16 +9,19 @@ import org.khorum.oss.spektr.dsl.soap.dsl.fault.SoapFaultScope
 /**
  * Abstract base class for SOAP fault builders.
  *
- * Provides common functionality for both SOAP 1.1 and 1.2 fault structures.
- * Subclasses implement version-specific fault element serialization.
+ * Provides common functionality for both SOAP 1.1 and 1.2 fault structures. Subclasses implement
+ * version-specific fault element serialization.
  *
- * SOAP 1.1 faults use: `faultcode`, `faultstring`, `faultactor`, `detail`
- * SOAP 1.2 faults use: `Code`, `Reason`, `Node`, `Role`, `Detail`
+ * SOAP 1.1 faults use: `faultcode`, `faultstring`, `faultactor`, `detail` SOAP 1.2 faults use:
+ * `Code`, `Reason`, `Node`, `Role`, `Detail`
  *
  * Methods for the wrong SOAP version will throw [IllegalStateException].
  */
 @Suppress("TooManyFunctions")
-sealed class SoapFaultBuilder : SoapBodyContent, SoapFaultScope {
+sealed class SoapFaultBuilder(
+        override var prettyPrint: Boolean = false,
+        override var indent: String = ""
+) : SoapBodyContent, SoapFaultScope, TransformXml {
     /** Optional detail element containing application-specific error information. */
     protected var detail: SoapElementBuilder? = null
 
@@ -27,7 +31,7 @@ sealed class SoapFaultBuilder : SoapBodyContent, SoapFaultScope {
      * @param block Configuration block for adding detail elements.
      */
     override fun detail(block: SoapElementBuilder.() -> Unit) {
-        detail = SoapElementBuilder().apply(block)
+        detail = SoapElementBuilder(prettyPrint = prettyPrint).apply(block)
     }
 
     // SOAP 1.1 methods - throw on SOAP 1.2
@@ -43,29 +47,35 @@ sealed class SoapFaultBuilder : SoapBodyContent, SoapFaultScope {
     override fun role(role: String): Unit = versionMismatch("role", "1.2")
 
     private fun versionMismatch(method: String, requiredVersion: String): Nothing =
-        throw IllegalStateException("$method requires SOAP $requiredVersion")
+            throw IllegalStateException("$method requires SOAP $requiredVersion")
+
+    /**
+     * Serializes this fault to the given StringBuilder.
+     *
+     * @receiver The StringBuilder to append to.
+     * @param prefix The SOAP envelope prefix for namespaced elements.
+     * @param depth The current nesting depth.
+     */
+    internal fun StringBuilder.addAsXml(prefix: String, depth: Int) {
+        addIndent(depth)
+        addTag("$prefix:Fault") {
+            addIndentIfPrettyPrinted()
+            addFaultContent(this, prefix, depth + 1)
+            addIndent(depth)
+        }
+        addIndentIfPrettyPrinted()
+    }
 
     /**
      * Serializes this fault to the given StringBuilder.
      *
      * @param sb The StringBuilder to append to.
-     * @param prefix The SOAP envelope prefix for namespaced elements.
-     * @param pretty Whether to format with indentation.
-     * @param indent The indentation string.
      * @param depth The current nesting depth.
+     * @param prefix The SOAP envelope prefix for namespaced elements.
      */
-    internal fun serialize(
-        sb: StringBuilder,
-        prefix: String, pretty: Boolean,
-        indent: String, depth: Int
-    ) {
-        sb.append(indent.repeat(depth))
-        sb.append("<$prefix:Fault>")
-        if (pretty) sb.appendLine()
-        serializeFaultContent(sb, prefix, pretty, indent, depth + 1)
-        sb.append(indent.repeat(depth))
-        sb.append("</$prefix:Fault>")
-        if (pretty) sb.appendLine()
+    override fun addAsXml(sb: StringBuilder, depth: Int, prefix: String?) {
+        val prefix = requireNotNull(prefix) { "SOAP envelope prefix is required" }
+        sb.addAsXml(prefix, depth)
     }
 
     /**
@@ -73,41 +83,33 @@ sealed class SoapFaultBuilder : SoapBodyContent, SoapFaultScope {
      *
      * @param sb The StringBuilder to append to.
      * @param prefix The SOAP envelope prefix.
-     * @param pretty Whether to format with indentation.
-     * @param indent The indentation string.
      * @param depth The current nesting depth.
      */
-    protected abstract fun serializeFaultContent(
-        sb: StringBuilder,
-        prefix: String, pretty: Boolean,
-        indent: String, depth: Int
-    )
+    protected abstract fun addFaultContent(sb: StringBuilder, prefix: String, depth: Int)
 
     /**
      * Serializes the detail element if present.
      *
-     * @param sb The StringBuilder to append to.
+     * @receiver The StringBuilder to append to.
      * @param prefix The SOAP envelope prefix.
-     * @param usePrefixedDetail If true, uses prefixed `Detail` (SOAP 1.2); otherwise `detail` (SOAP 1.1).
-     * @param pretty Whether to format with indentation.
-     * @param indent The indentation string.
+     * @param usePrefixedDetail If true, uses prefixed `Detail` (SOAP 1.2); otherwise `detail` (SOAP
+     * 1.1).
      * @param depth The current nesting depth.
      */
-    protected fun serializeDetail(
-        sb: StringBuilder,
-        prefix: String, usePrefixedDetail: Boolean,
-        pretty: Boolean,
-        indent: String, depth: Int
+    protected fun StringBuilder.addDetailElementIfPresent(
+            prefix: String,
+            usePrefixedDetail: Boolean,
+            depth: Int
     ) {
-        detail?.let { d ->
+        detail?.also { d ->
             val detailTag = if (usePrefixedDetail) "$prefix:Detail" else "detail"
-            sb.append(indent.repeat(depth))
-            sb.append("<$detailTag>")
-            if (pretty) sb.appendLine()
-            d.serializeContent(sb, pretty, indent, depth + 1)
-            sb.append(indent.repeat(depth))
-            sb.append("</$detailTag>")
-            if (pretty) sb.appendLine()
+            addIndent(depth)
+            addTag(detailTag) {
+                addIndentIfPrettyPrinted()
+                d.addChildContent(this, depth + 1)
+                addIndent(depth)
+            }
+            addIndentIfPrettyPrinted()
         }
     }
 }

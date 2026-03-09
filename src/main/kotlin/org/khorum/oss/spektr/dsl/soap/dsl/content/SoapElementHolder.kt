@@ -1,5 +1,6 @@
 package org.khorum.oss.spektr.dsl.soap.dsl.content
 
+import org.khorum.oss.spektr.dsl.soap.dsl.TransformXml
 import org.khorum.oss.spektr.dsl.soap.dsl.SoapDslMarker
 
 /**
@@ -11,7 +12,10 @@ import org.khorum.oss.spektr.dsl.soap.dsl.SoapDslMarker
  * [SoapBodyBuilder][org.khorum.oss.spektr.dsl.soap.dsl.body.SoapBodyBuilder].
  */
 @Suppress("TooManyFunctions")
-abstract class SoapElementHolder {
+abstract class SoapElementHolder(
+    override var prettyPrint: Boolean = false,
+    override var indent: String = ""
+) : TransformXml {
     /** Attributes to be rendered on this element. */
     protected val attributes: MutableMap<String, String> = mutableMapOf()
 
@@ -19,24 +23,30 @@ abstract class SoapElementHolder {
     protected val children: MutableList<SoapChild> = mutableListOf()
 
     /** CDATA content to wrap in `<![CDATA[...]]>`. Mutually exclusive with [rawXml] and text content. */
-    var cdata: String? = null
+    var cData: CData? = null
 
-    /** Raw XML string to include without escaping. Mutually exclusive with [cdata] and text content. */
-    var rawXml: String? = null
+    /** Raw XML string to include without escaping. Mutually exclusive with [cData] and text content. */
+    var rawXml: RawXml? = null
+
+    fun cData(data: String) {
+        cData = CData(data)
+    }
+
+    fun rawXml(data: String) {
+        rawXml = RawXml(data)
+    }
 
     /**
      * Serializes all child elements in insertion order.
      *
      * @param sb The StringBuilder to append to.
-     * @param pretty Whether to format with indentation.
-     * @param indent The indentation string.
      * @param depth The current nesting depth.
      */
-    internal fun serializeContent(sb: StringBuilder, pretty: Boolean, indent: String, depth: Int) {
+    internal fun addChildContent(sb: StringBuilder, depth: Int) {
         for (child in children) {
             when (child) {
-                is SoapElementBuilder -> child.serialize(sb, pretty, indent, depth)
-                is SoapListBuilder -> child.serialize(sb, pretty, indent, depth)
+                is SoapElementBuilder -> child.addContent(sb, depth)
+                is SoapListBuilder -> child.addAsXml(sb, depth)
             }
         }
     }
@@ -49,7 +59,7 @@ abstract class SoapElementHolder {
      */
     @SoapDslMarker
     fun element(name: String, block: SoapElementBuilder.() -> Unit) {
-        children.add(SoapElementBuilder(name).apply(block))
+        children.add(SoapElementBuilder(name, prettyPrint = prettyPrint).apply(block))
     }
 
     /**
@@ -104,7 +114,7 @@ abstract class SoapElementHolder {
      */
     @SoapDslMarker
     fun optional(name: String, block: SoapElementBuilder.() -> Unit) {
-        children.add(SoapElementBuilder(name, optional = true).apply(block))
+        children.add(SoapElementBuilder(name, optional = true, prettyPrint = prettyPrint).apply(block))
     }
 
     /**
@@ -126,7 +136,7 @@ abstract class SoapElementHolder {
      */
     @SoapDslMarker
     fun nillable(name: String, block: SoapElementBuilder.() -> Unit) {
-        children.add(SoapElementBuilder(name, nillable = true).apply(block))
+        children.add(SoapElementBuilder(name, nillable = true, prettyPrint = prettyPrint).apply(block))
     }
 
     /**
@@ -148,7 +158,7 @@ abstract class SoapElementHolder {
      */
     @SoapDslMarker
     fun list(name: String, block: SoapListBuilder.() -> Unit) {
-        children.add(SoapListBuilder(name).apply(block))
+        children.add(SoapListBuilder(name, prettyPrint = prettyPrint, indent = indent).apply(block))
     }
 
     /**
@@ -160,6 +170,6 @@ abstract class SoapElementHolder {
      */
     @SoapDslMarker
     fun list(namespace: String, name: String, block: SoapListBuilder.() -> Unit) {
-        children.add(SoapListBuilder("$namespace:$name").apply(block))
+        children.add(SoapListBuilder("$namespace:$name", prettyPrint = prettyPrint, indent = indent).apply(block))
     }
 }

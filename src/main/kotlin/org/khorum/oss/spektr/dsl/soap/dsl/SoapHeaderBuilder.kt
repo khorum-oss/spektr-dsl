@@ -6,7 +6,6 @@ import org.khorum.oss.spektr.dsl.soap.dsl.content.SoapElementHolder
  * Builder for the SOAP Header section.
  *
  * Extends [SoapElementHolder] to allow adding child elements, and implements
- * [SoapComponent] for serialization support.
  *
  * Example:
  * ```kotlin
@@ -18,7 +17,10 @@ import org.khorum.oss.spektr.dsl.soap.dsl.content.SoapElementHolder
  * }
  * ```
  */
-class SoapHeaderBuilder : SoapElementHolder(), SoapComponent {
+class SoapHeaderBuilder(
+    override var prettyPrint: Boolean = false,
+    override var indent: String = ""
+) : SoapElementHolder(), TransformXml {
     /** The envelope prefix to use for the Header element tag. */
     var prefix: String? = null
 
@@ -27,37 +29,27 @@ class SoapHeaderBuilder : SoapElementHolder(), SoapComponent {
      *
      * @return The serialized header as a single-line XML string.
      */
-    override fun toString(): String {
-        val sb = StringBuilder()
-        serialize(sb, false, "", 0)
-        return sb.toString()
-    }
-
-    /**
-     * Returns formatted XML with indentation.
-     *
-     * @param indent The string to use for each indentation level.
-     * @return The serialized header with pretty formatting.
-     */
-    override fun toPrettyString(indent: String): String = buildString {
-        serialize(this, pretty = true, indent, 0)
+    override fun toString(): String = buildString {
+        addAsXml(depth = 0)
     }
 
     /**
      * Serializes the header to the given StringBuilder.
      *
-     * @param sb The StringBuilder to append to.
-     * @param pretty Whether to format with indentation.
-     * @param indent The indentation string.
+     * @receiver The StringBuilder to append to.
      * @param depth The current nesting depth.
      */
-    internal fun serialize(sb: StringBuilder, pretty: Boolean, indent: String, depth: Int) {
-        sb.append(indent.repeat(depth))
-        sb.append("<$prefix:Header>")
-        if (pretty) sb.appendLine()
-        serializeContent(sb, pretty, indent, depth + 1)
-        sb.append(indent.repeat(depth))
-        sb.append("</$prefix:Header>")
-        if (pretty) sb.appendLine()
+    internal fun StringBuilder.addAsXml(depth: Int) {
+        append(" ".repeat(depth))
+        append("<$prefix:Header>")
+        addIndentIfPrettyPrinted()
+        addChildContent(this, depth + 1)
+        append(indent.repeat(depth))
+        append("</$prefix:Header>")
+        addIndentIfPrettyPrinted()
+    }
+
+    override fun addAsXml(sb: StringBuilder, depth: Int, prefix: String?) {
+        sb.addAsXml(depth)
     }
 }

@@ -36,7 +36,9 @@ class SoapBuilderDslTest {
         builder: SoapEnvelopeBuilder,
         expectedFileLocation: String
     ) {
-        val generatedXml = SoapXml(builder.toPrettyString()).normalize().content
+        builder.prettyPrint = true
+        builder.indent = "  "
+        val generatedXml = SoapXml(builder.toString()).normalize().content
         val expectedXml = loadResourceXml(expectedFileLocation).normalize().content
         assertEquals(
             expectedXml,
@@ -194,7 +196,7 @@ class SoapBuilderDslTest {
                                 }
                             }
                             element("description") {
-                                cdata = "Appeared at <midnight> & vanished \"instantly\" — left no trace"
+                                cData("Appeared at <midnight> & vanished \"instantly\" — left no trace")
                             }
                         }
                     }
@@ -388,8 +390,8 @@ class SoapBuilderDslTest {
                                                 attribute("room", "Séance Room")
                                                 element("date") { content = LocalDate.of(2024, 10, 31) }
                                                 element("description") {
-                                                    cdata =
-                                                        """Translucent figure seen near the fireplace — "cold draft" reported by 3 visitors"""
+                                                    cData(
+                                                        """Translucent figure seen near the fireplace — "cold draft" reported by 3 visitors""")
                                                 }
                                             }
                                             element("sighting") {

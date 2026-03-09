@@ -1,15 +1,15 @@
 package org.khorum.oss.spektr.dsl.soap.dsl.body
 
 import org.khorum.oss.spektr.dsl.soap.dsl.SoapDslMarker
-import org.khorum.oss.spektr.dsl.soap.dsl.content.SoapElementHolder
 import org.khorum.oss.spektr.dsl.soap.dsl.SoapVersion
+import org.khorum.oss.spektr.dsl.soap.dsl.content.SoapElementHolder
 import org.khorum.oss.spektr.dsl.soap.dsl.fault.SoapFaultScope
 
 /**
  * Builder for the SOAP Body section.
  *
- * Extends [SoapElementHolder] to allow adding child elements. Can optionally
- * include a fault element for error responses.
+ * Extends [SoapElementHolder] to allow adding child elements. Can optionally include a fault
+ * element for error responses.
  *
  * Example:
  * ```kotlin
@@ -25,7 +25,8 @@ import org.khorum.oss.spektr.dsl.soap.dsl.fault.SoapFaultScope
  *
  * @property version The SOAP version, used to create the appropriate fault builder.
  */
-class SoapBodyBuilder(private val version: SoapVersion) : SoapBodyContent, SoapElementHolder() {
+class SoapBodyBuilder(private val version: SoapVersion, prettyPrint: Boolean = false) :
+        SoapBodyContent, SoapElementHolder(prettyPrint = prettyPrint) {
     private var fault: SoapFaultBuilder? = null
 
     /**
@@ -44,6 +45,10 @@ class SoapBodyBuilder(private val version: SoapVersion) : SoapBodyContent, SoapE
      */
     @SoapDslMarker
     fun fault(block: SoapFaultScope.() -> Unit) {
-        fault = version.faultBuilder().apply(block)
+        fault = version.faultBuilder(prettyPrint, indent).apply(block)
+    }
+
+    override fun addAsXml(sb: StringBuilder, depth: Int, prefix: String?) {
+        super.addChildContent(sb, depth)
     }
 }

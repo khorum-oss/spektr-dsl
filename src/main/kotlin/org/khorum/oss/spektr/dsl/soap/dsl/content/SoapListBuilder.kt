@@ -1,7 +1,5 @@
 package org.khorum.oss.spektr.dsl.soap.dsl.content
 
-import org.khorum.oss.spektr.dsl.soap.dsl.SoapComponent
-
 /**
  * Builder for list container elements that hold repeating child elements.
  *
@@ -25,51 +23,45 @@ import org.khorum.oss.spektr.dsl.soap.dsl.SoapComponent
  *
  * @property name The list container element tag name.
  */
-class SoapListBuilder(private val name: String) : SoapElementHolder(), SoapChild, SoapComponent {
+class SoapListBuilder(
+    private val name: String,
+    prettyPrint: Boolean,
+    indent: String
+) : SoapElementHolder(prettyPrint = prettyPrint, indent = indent), SoapChild {
 
     /**
      * Returns compact XML without indentation.
      *
      * @return The serialized list as a single-line XML string.
      */
-    override fun toString(): String {
-        val sb = StringBuilder()
-        serialize(sb, false, "", 0)
-        return sb.toString()
+    override fun toString(): String = buildString {
+        addAsXml(0)
     }
 
-    /**
-     * Returns formatted XML with indentation.
-     *
-     * @param indent The string to use for each indentation level.
-     * @return The serialized list with pretty formatting.
-     */
-    override fun toPrettyString(indent: String): String = buildString {
-        serialize(this, pretty = true, indent, 0)
+    override fun addAsXml(sb: StringBuilder, depth: Int, prefix: String?) {
+        sb.addAsXml(depth)
     }
 
     /**
      * Serializes this list to the given StringBuilder.
      *
-     * @param sb The StringBuilder to append to.
-     * @param pretty Whether to format with indentation.
-     * @param indent The indentation string.
+     * @receiver The StringBuilder to append to.
      * @param depth The current nesting depth.
      */
-    internal fun serialize(sb: StringBuilder, pretty: Boolean, indent: String, depth: Int) {
+    internal fun StringBuilder.addAsXml(depth: Int) {
         if (children.isEmpty()) {
-            sb.append(indent.repeat(depth))
-            sb.append("<$name/>")
-            if (pretty) sb.appendLine()
+            addIndent(depth)
+            append("<$name/>")
+            addIndentIfPrettyPrinted()
             return
         }
 
-        sb.append(indent.repeat(depth))
-        sb.append("<$name>")
-        if (pretty) sb.appendLine()
-        serializeContent(sb, pretty, indent, depth + 1)
-        sb.append(indent.repeat(depth))
-        sb.append("</$name>")
-        if (pretty) sb.appendLine()
+        addIndent(depth)
+        addTag(name) {
+            addIndentIfPrettyPrinted()
+            addChildContent(this, depth + 1)
+            addIndent(depth)
+        }
+        addIndentIfPrettyPrinted()
     }
 }
