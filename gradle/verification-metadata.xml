@@ -30,6 +30,7 @@
          <trust group="^org[.]slf4j($|([.].*))" regex="true"/>
          <trust group="^org[.]sonarsource($|([.].*))" regex="true"/>
          <trust group="^software[.]amazon($|([.].*))" regex="true"/>
+         <trust group="gradle" name="gradle"/>
       </trusted-artifacts>
       <ignored-keys>
          <ignored-key id="012579464D01C06A" reason="Key couldn't be downloaded from any key server"/>

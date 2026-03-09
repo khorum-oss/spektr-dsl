@@ -28,13 +28,7 @@ import org.khorum.oss.spektr.dsl.soap.dsl.fault.SoapFaultScope
 class SoapBodyBuilder(private val version: SoapVersion, prettyPrint: Boolean = false) :
         SoapBodyContent, SoapElementHolder(prettyPrint = prettyPrint) {
     private var fault: SoapFaultBuilder? = null
-
-    /**
-     * Returns the fault builder if one has been configured.
-     *
-     * @return The fault builder, or null if no fault has been set.
-     */
-    internal fun getFault(): SoapFaultBuilder? = fault
+        get(): SoapFaultBuilder? = field
 
     /**
      * Adds a fault element to this body.
@@ -49,6 +43,7 @@ class SoapBodyBuilder(private val version: SoapVersion, prettyPrint: Boolean = f
     }
 
     override fun addAsXml(sb: StringBuilder, depth: Int, prefix: String?) {
-        super.addChildContent(sb, depth)
+        addChildContent(sb, depth)
+        fault?.addAsXml(sb, depth, prefix)
     }
 }

@@ -22,9 +22,13 @@ version = file("VERSION").readText().trim()
 
 // Bridge Dokka v1 task names to v2 for maven-generated-artifacts plugin compatibility
 tasks.register("dokkaJavadoc") {
+	group = "documentation"
+	description = "Generate Javadoc API documentation"
 	dependsOn("dokkaGeneratePublicationJavadoc")
 }
 tasks.register("dokkaHtml") {
+	group = "documentation"
+	description = "Generate HTML API documentation"
 	dependsOn("dokkaGeneratePublicationHtml")
 }
 
@@ -32,8 +36,10 @@ repositories {
 	mavenCentral()
 }
 
+val loggingVersion = "4.0.0-beta-2"
+
 dependencies {
-	implementation("io.github.microutils:kotlin-logging:4.0.0-beta-2")
+	implementation("io.github.microutils:kotlin-logging:$loggingVersion")
 
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")

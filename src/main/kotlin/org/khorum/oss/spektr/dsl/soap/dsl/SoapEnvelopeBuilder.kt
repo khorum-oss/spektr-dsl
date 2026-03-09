@@ -139,8 +139,7 @@ class SoapEnvelopeBuilder(
             val b = body
 
             if (b is SoapBodyBuilder) {
-                b.addChildContent(this, DEFAULT_BODY_DEPTH + 1)
-                b.getFault()?.addAsXml(this, DEFAULT_BODY_DEPTH + 1, envelopePrefix)
+                b.addAsXml(this, DEFAULT_BODY_DEPTH + 1, envelopePrefix)
             } else if (b is SoapFaultBuilder) {
                 b.addAsXml(this, DEFAULT_BODY_DEPTH + 1, envelopePrefix)
             }

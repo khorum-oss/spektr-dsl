@@ -30,6 +30,7 @@ import org.khorum.oss.spektr.dsl.soap.dsl.escapeXml
  */
 class SoapFaultCode : TransformXml {
     private var value: String? = null
+        get(): String? = field
     private val subcodes: MutableList<String> = mutableListOf()
 
     override var prettyPrint: Boolean = false
@@ -77,13 +78,6 @@ class SoapFaultCode : TransformXml {
         }
         addIndentIfPrettyPrinted()
     }
-
-    /**
-     * Returns the primary fault code value.
-     *
-     * @return The value, or null if not set.
-     */
-    internal fun getValue(): String? = value
 
     /**
      * Sets the primary fault code value.
