@@ -9,11 +9,10 @@ import org.khorum.oss.spektr.dsl.soap.dsl.SoapEnvelopeBuilder
  * providing a consistent API for XML generation with configurable formatting.
  *
  * @property prettyPrint Whether to format the output with indentation and newlines (default: true).
- * @property indent The string to use for each indentation level (default: two spaces).
  */
 class SoapXmlSerializer(
-    private val prettyPrint: Boolean = true,
-    private val indent: String = "  "
+    private val prettyPrint: Boolean? = null,
+    private val indent: String? = null
 ) {
     /**
      * Converts a [SoapEnvelopeBuilder] to an XML string.
@@ -21,12 +20,11 @@ class SoapXmlSerializer(
      * @param envelope The SOAP envelope builder to serialize.
      * @return The serialized XML string.
      */
-    fun serialize(envelope: SoapEnvelopeBuilder): String {
-        return if (prettyPrint) {
-            envelope.toPrettyString(indent)
-        } else {
-            envelope.toString()
-        }
+    fun convertToXml(envelope: SoapEnvelopeBuilder): String {
+        prettyPrint?.let { envelope.prettyPrint = it }
+        indent?.let { envelope.indent = it }
+
+        return envelope.toString()
     }
 }
 
@@ -47,10 +45,9 @@ value class SoapXml(val content: String)
  * @param indent The string to use for each indentation level (default: two spaces).
  * @return The serialized XML wrapped in a [SoapXml] instance.
  */
-fun SoapEnvelopeBuilder.toXml(prettyPrint: Boolean = true, indent: String = "  "): SoapXml {
-    return if (prettyPrint) {
-        SoapXml(toPrettyString(indent))
-    } else {
-        SoapXml(toString())
-    }
+fun SoapEnvelopeBuilder.toXml(prettyPrint: Boolean? = null, indent: String? = null): SoapXml {
+    prettyPrint?.let { this.prettyPrint = it }
+    indent?.let { this.indent = it }
+
+    return SoapXml(toString())
 }

@@ -18,7 +18,7 @@ enum class SoapVersion {
      * Fault structure uses `faultcode`, `faultstring`, `faultactor`, and `detail` elements.
      */
     V1_1 {
-        override fun faultBuilder() = Soap11FaultBuilder()
+        override fun faultBuilder(prettyPrint: Boolean, indent: String) = Soap11FaultBuilder(prettyPrint, indent)
     },
 
     /**
@@ -28,7 +28,7 @@ enum class SoapVersion {
      * Fault structure uses prefixed elements: `Code`, `Reason`, `Node`, `Role`, and `Detail`.
      */
     V1_2 {
-        override fun faultBuilder() = Soap12FaultBuilder()
+        override fun faultBuilder(prettyPrint: Boolean, indent: String) = Soap12FaultBuilder(prettyPrint, indent)
     };
 
     /**
@@ -36,5 +36,5 @@ enum class SoapVersion {
      *
      * @return A new [SoapFaultBuilder] instance for this version.
      */
-    abstract fun faultBuilder(): SoapFaultBuilder
+    abstract fun faultBuilder(prettyPrint: Boolean, indent: String): SoapFaultBuilder
 }

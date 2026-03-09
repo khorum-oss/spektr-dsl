@@ -1,5 +1,8 @@
 package org.khorum.oss.spektr.dsl.soap.dsl.fault
 
+import org.khorum.oss.spektr.dsl.soap.dsl.TransformXml
+import org.khorum.oss.spektr.dsl.soap.dsl.escapeXml
+
 /**
  * Builder for SOAP 1.2 fault codes.
  *
@@ -25,23 +28,56 @@ package org.khorum.oss.spektr.dsl.soap.dsl.fault
  * // </env:Code>
  * ```
  */
-class SoapFaultCode {
+class SoapFaultCode : TransformXml {
     private var value: String? = null
+        get(): String? = field
     private val subcodes: MutableList<String> = mutableListOf()
 
-    /**
-     * Returns the primary fault code value.
-     *
-     * @return The value, or null if not set.
-     */
-    internal fun getValue(): String? = value
+    override var prettyPrint: Boolean = false
+    override var indent: String = ""
 
-    /**
-     * Returns the list of subcodes.
-     *
-     * @return The subcodes in order of nesting depth.
-     */
-    internal fun getSubcodes(): List<String> = subcodes
+    override fun addAsXml(sb: StringBuilder, depth: Int, prefix: String?) {
+        val code = value
+        sb.apply {
+            addIndent(depth)
+            addTag("$prefix:Code") {
+                addIndentIfPrettyPrinted()
+                addIndent(depth + 1)
+
+                code?.let { v ->
+                    addIndent(depth + 1)
+                    addTag("$prefix:Value") {
+                        append(escapeXml(v))
+                    }
+                    addIndentIfPrettyPrinted()
+                }
+
+                addSubcodes(subcodes, depth + 1, prefix)
+                addIndent(depth)
+            }
+            addIndentIfPrettyPrinted()
+        }
+    }
+
+    private fun StringBuilder.addSubcodes(
+        subcodes: List<String>,
+        depth: Int,
+        prefix: String?
+    ) {
+        if (subcodes.isEmpty()) return
+
+        addIndent(depth)
+        addTag("$prefix:Subcode") {
+            addIndentIfPrettyPrinted()
+            addIndent(depth + 1)
+            addTag("$prefix:Value") {
+                append(escapeXml(subcodes.first()))
+            }
+            addIndentIfPrettyPrinted()
+            addIndent(depth)
+        }
+        addIndentIfPrettyPrinted()
+    }
 
     /**
      * Sets the primary fault code value.

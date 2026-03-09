@@ -8,8 +8,8 @@ import org.khorum.oss.spektr.dsl.soap.dsl.fault.SoapFaultScope
 /**
  * Builder for constructing SOAP envelopes.
  *
- * This is the root builder class for the SOAP DSL, providing methods to configure
- * the envelope's version, namespaces, header, and body sections.
+ * This is the root builder class for the SOAP DSL, providing methods to configure the envelope's
+ * version, namespaces, header, and body sections.
  *
  * Example:
  * ```kotlin
@@ -21,7 +21,10 @@ import org.khorum.oss.spektr.dsl.soap.dsl.fault.SoapFaultScope
  * println(envelope.toPrettyString())
  * ```
  */
-class SoapEnvelopeBuilder : SoapComponent {
+class SoapEnvelopeBuilder(
+        override var prettyPrint: Boolean = false,
+        override var indent: String = ""
+) : TransformXml {
     /** The SOAP version to use (default: SOAP 1.2). */
     var version: SoapVersion = SoapVersion.V1_2
 
@@ -52,7 +55,7 @@ class SoapEnvelopeBuilder : SoapComponent {
      */
     @SoapDslMarker
     fun header(block: SoapHeaderBuilder.() -> Unit) {
-        header = SoapHeaderBuilder().apply(block)
+        header = SoapHeaderBuilder(prettyPrint).apply(block)
     }
 
     /**
@@ -66,14 +69,14 @@ class SoapEnvelopeBuilder : SoapComponent {
     @SoapDslMarker
     fun body(block: SoapBodyBuilder.() -> Unit) {
         checkBodyNotSet()
-        body = SoapBodyBuilder(version).apply(block)
+        body = SoapBodyBuilder(version, prettyPrint).apply(block)
     }
 
     /**
      * Configures the SOAP body as a fault response.
      *
-     * Cannot be called if [body] has already been called on this envelope.
-     * The fault structure depends on the configured [version].
+     * Cannot be called if [body] has already been called on this envelope. The fault structure
+     * depends on the configured [version].
      *
      * @param block Configuration block for defining the fault details.
      * @throws IllegalStateException if body has already been set.
@@ -81,11 +84,11 @@ class SoapEnvelopeBuilder : SoapComponent {
     @SoapDslMarker
     fun fault(block: SoapFaultScope.() -> Unit) {
         checkBodyNotSet()
-        body = version.faultBuilder().apply(block)
+        body = version.faultBuilder(prettyPrint, indent).apply(block)
     }
 
     private fun checkBodyNotSet() {
-        if (body != null) throw IllegalStateException("Body already set")
+        check(body == null) { "Body already set" }
     }
 
     /**
@@ -93,66 +96,67 @@ class SoapEnvelopeBuilder : SoapComponent {
      *
      * @return The serialized SOAP envelope as a single-line XML string.
      */
-    override fun toString(): String = buildString {
-        serialize(this, pretty = false, indent = "", depth = 0)
+    override fun toString(): String = buildString { addAsXml() }
+
+    override fun addAsXml(sb: StringBuilder, depth: Int, prefix: String?) {
+        sb.addAsXml()
     }
 
-    /**
-     * Returns formatted XML with indentation for readability.
-     *
-     * @param indent The string to use for each indentation level.
-     * @return The serialized SOAP envelope with pretty formatting.
-     */
-    override fun toPrettyString(indent: String): String = buildString {
-        serialize(this, pretty = true, indent = indent, depth = 0)
-    }
+    private fun StringBuilder.addAsXml() {
+        val soapNs = schemasLocation ?: SOAP_NAMESPACES[version]
 
-    private fun serialize(sb: StringBuilder, pretty: Boolean, indent: String, depth: Int) {
-        val soapNs = schemasLocation
-            ?: SOAP_NAMESPACES[version]
-            ?: throw IllegalArgumentException("Unknown SOAP version: $version")
+        append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
+        addIndentIfPrettyPrinted()
 
-        sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
-        if (pretty) sb.appendLine()
+        addIndent(DEFAULT_SERIALIZED_DEPTH)
 
-        sb.append(indent.repeat(depth))
-        sb.append("<$envelopePrefix:Envelope xmlns:$envelopePrefix=\"$soapNs\"")
-        namespaces?.getNamespaces()?.forEach { (attr, uri) -> sb.append(" $attr=\"$uri\"") }
-        sb.append(">")
-        if (pretty) sb.appendLine()
+        val namespaceAttributes =
+                namespaces
+                        ?.getNamespaces()
+                        ?.map { (attr, uri) -> "$attr=\"$uri\"" }
+                        ?.joinToString(" ")
+        val spacing = " ".takeIf { namespaceAttributes != null } ?: ""
+        val attributes = """xmlns:$envelopePrefix="$soapNs"$spacing${namespaceAttributes ?: ""}"""
 
-        header?.prefix = envelopePrefix
-        header?.serialize(sb, pretty, indent, depth + 1)
-        serializeBody(sb, pretty, indent, depth + 1)
+        addTag("$envelopePrefix:Envelope", attributes) {
+            addIndentIfPrettyPrinted()
 
-        sb.append(indent.repeat(depth))
-        sb.append("</$envelopePrefix:Envelope>")
-        if (pretty) sb.appendLine()
-    }
+            header?.prefix = envelopePrefix
+            header?.addAsXml(this, DEFAULT_SERIALIZED_DEPTH + 1)
 
-    private fun serializeBody(sb: StringBuilder, pretty: Boolean, indent: String, depth: Int) {
-        sb.append(indent.repeat(depth))
-        sb.append("<$envelopePrefix:Body>")
-        if (pretty) sb.appendLine()
+            serializeBody()
 
-        when (val b = body) {
-            is SoapBodyBuilder -> {
-                b.serializeContent(sb, pretty, indent, depth + 1)
-                b.getFault()?.serialize(sb, envelopePrefix, pretty, indent, depth + 1)
-            }
-            is SoapFaultBuilder -> b.serialize(sb, envelopePrefix, pretty, indent, depth + 1)
-            null -> {}
+            addIndent(DEFAULT_SERIALIZED_DEPTH)
         }
+        addIndentIfPrettyPrinted()
+    }
 
-        sb.append(indent.repeat(depth))
-        sb.append("</$envelopePrefix:Body>")
-        if (pretty) sb.appendLine()
+    private fun StringBuilder.serializeBody() {
+        addIndent(DEFAULT_BODY_DEPTH)
+        addTag("$envelopePrefix:Body") {
+            addIndentIfPrettyPrinted()
+
+            val b = body
+
+            if (b is SoapBodyBuilder) {
+                b.addAsXml(this, DEFAULT_BODY_DEPTH + 1, envelopePrefix)
+            } else if (b is SoapFaultBuilder) {
+                b.addAsXml(this, DEFAULT_BODY_DEPTH + 1, envelopePrefix)
+            }
+
+            addIndent(DEFAULT_BODY_DEPTH)
+        }
+        addIndentIfPrettyPrinted()
     }
 
     companion object {
-        private val SOAP_NAMESPACES = mapOf(
-            SoapVersion.V1_1 to "http://schemas.xmlsoap.org/soap/envelope/",
-            SoapVersion.V1_2 to "http://www.w3.org/2003/05/soap-envelope"
-        )
+        private const val DEFAULT_SERIALIZED_DEPTH = 0
+        private const val DEFAULT_BODY_DEPTH = 1
+
+        private val SOAP_NAMESPACES =
+                mapOf(
+                        SoapVersion.V1_1 to "http://schemas.xmlsoap.org/soap/envelope/",
+                        SoapVersion.V1_2 to "http://www.w3.org/2003/05/soap-envelope"
+                )
     }
 }
