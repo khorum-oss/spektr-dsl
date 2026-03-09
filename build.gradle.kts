@@ -1,4 +1,3 @@
-import kotlinx.kover.gradle.plugin.dsl.KoverProjectExtension
 import org.khorum.oss.plugins.open.publishing.digitalocean.domain.uploadToDigitalOceanSpaces
 import org.khorum.oss.plugins.open.publishing.mavengenerated.domain.mavenGeneratedArtifacts
 import org.khorum.oss.plugins.open.secrets.getPropertyOrEnv
@@ -9,7 +8,7 @@ plugins {
 	id("dev.detekt") version "2.0.0-alpha.2"
 	id("org.jetbrains.dokka") version "2.1.0"
 	id("org.jetbrains.dokka-javadoc") version "2.1.0"
-	id("org.jetbrains.kotlinx.kover") version "0.7.6"
+	id("org.jetbrains.kotlinx.kover") version "0.9.4"
 	id("org.sonarqube") version "7.0.0.6105"
 	id("org.khorum.oss.plugins.open.publishing.maven-generated-artifacts") version "1.0.3"
 	id("org.khorum.oss.plugins.open.publishing.digital-ocean-spaces") version "1.0.3"
@@ -45,11 +44,6 @@ dependencies {
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
-// Disable Kover instrumentation globally to avoid race condition
-// with kover-agent.args file during parallel builds (Kover 0.7.x bug)
-extensions.configure<KoverProjectExtension> {
-	disable()
-}
 
 java {
 	toolchain {

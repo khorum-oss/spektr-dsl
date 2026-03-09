@@ -4,6 +4,7 @@
       <verify-metadata>true</verify-metadata>
       <verify-signatures>true</verify-signatures>
       <trusted-artifacts>
+         <trust group="gradle" name="gradle"/>
          <trust group="^com[.]fasterxml($|([.].*))" regex="true"/>
          <trust group="^com[.]google[.]code[.]gson($|([.].*))" regex="true"/>
          <trust group="^com[.]google[.]errorprone($|([.].*))" regex="true"/>
@@ -30,7 +31,6 @@
          <trust group="^org[.]slf4j($|([.].*))" regex="true"/>
          <trust group="^org[.]sonarsource($|([.].*))" regex="true"/>
          <trust group="^software[.]amazon($|([.].*))" regex="true"/>
-         <trust group="gradle" name="gradle"/>
       </trusted-artifacts>
       <ignored-keys>
          <ignored-key id="012579464D01C06A" reason="Key couldn't be downloaded from any key server"/>
