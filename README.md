@@ -3,22 +3,21 @@
     <h1 style="padding: 0; margin: 0; font-size: 76px">Spektr DSL</h1>
 </span>
 
-A Kotlin DSL library for defining REST and SOAP endpoints. Used by the [Spektr](https://github.com/khorum-oss/spektr) server to load endpoint configurations from external JARs at runtime.
+A Kotlin DSL library for defining REST and SOAP endpoints. Server implementations load endpoint configurations from external JARs at runtime.
 
 ## Installation
 
-Add the repository and dependency to your `build.gradle.kts`:
+Add the dependency to your `build.gradle.kts`, along with the Maven repository the
+artifact was published to:
 
 ```kotlin
 repositories {
     mavenCentral()
-    maven {
-        url = uri("https://open-reliquary.nyc3.cdn.digitaloceanspaces.com")
-    }
+    // plus the Maven repository spektr-dsl is published to
 }
 
 dependencies {
-    implementation("org.khorum.oss.spektr:spektr-dsl:1.0.7")
+    implementation("org.khorum.oss.spektr:spektr-dsl:1.0.9")
 }
 ```
 
@@ -266,6 +265,31 @@ soapEnvelope {
 ```
 
 Faults can also be added inside a `body` block alongside other elements.
+
+## Publishing
+
+Publishing uses the standard Gradle `maven-publish` plugin. The target repository and
+its credentials are never committed — supply them as Gradle properties (for example in
+`~/.gradle/gradle.properties`), `-P` flags, or environment variables:
+
+| Gradle property         | Environment variable   | Purpose                                     |
+|-------------------------|------------------------|---------------------------------------------|
+| `publish.repo.url`      | `MAVEN_REPO_URL`       | Target Maven repository URL                 |
+| `publish.repo.username` | `MAVEN_REPO_USERNAME`  | Repository username                         |
+| `publish.repo.password` | `MAVEN_REPO_PASSWORD`  | Repository password or token                |
+| `signing.key`           | `GPG_SIGNING_KEY`      | ASCII-armored PGP private key (optional)    |
+| `signing.password`      | `GPG_SIGNING_PASSWORD` | Passphrase for that key (optional)          |
+
+```bash
+# publish to the configured repository
+./gradlew publishAllPublicationsToPrivateRepository
+
+# or publish locally for testing
+./gradlew publishToMavenLocal
+```
+
+Without `publish.repo.url` / `MAVEN_REPO_URL` no remote repository is registered, so only
+`publishToMavenLocal` is available. Artifacts are signed only when a signing key is present.
 
 ## License
 

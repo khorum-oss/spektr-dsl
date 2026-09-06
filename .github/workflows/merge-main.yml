@@ -46,16 +46,17 @@ jobs:
         with:
           java-version: '21'
 
-      - name: Publish to DigitalOcean Spaces
-        run: ./gradlew uploadToDigitalOceanSpaces --no-daemon
+      - name: Publish to Maven repository
+        run: ./gradlew publishAllPublicationsToPrivateRepository --no-daemon
         env:
-          DO_SPACES_API_KEY: ${{ secrets.DO_SPACES_API_KEY }}
-          DO_SPACES_SECRET: ${{ secrets.DO_SPACES_SECRET }}
+          MAVEN_REPO_URL: ${{ secrets.MAVEN_REPO_URL }}
+          MAVEN_REPO_USERNAME: ${{ secrets.MAVEN_REPO_USERNAME }}
+          MAVEN_REPO_PASSWORD: ${{ secrets.MAVEN_REPO_PASSWORD }}
           GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
           GPG_SIGNING_PASSWORD: ${{ secrets.GPG_SIGNING_PASSWORD }}
 
-  coverage-and-sonar:
-    name: Coverage & SonarCloud (main baseline)
+  coverage:
+    name: Coverage (main baseline)
     needs: publish
     if: always() && needs.publish.result == 'success'
     runs-on: ubuntu-latest
@@ -80,12 +81,6 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: build/reports/kover/report.xml
           fail_ci_if_error: false
-
-      - name: SonarCloud Scan
-        run: ./gradlew sonar --no-daemon
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   release:
     needs: [ version, publish ]
@@ -118,7 +113,7 @@ jobs:
 
   notify-discord:
     name: Notify Discord
-    needs: [ version, publish, release, coverage-and-sonar ]
+    needs: [ version, publish, release, coverage ]
     if: always()
     uses: violabs/public-cicd/.github/workflows/notify-discord.yml@main
     with:
@@ -126,6 +121,6 @@ jobs:
       workflow_name: ${{ github.workflow }}
       build_result: ${{ needs.publish.result == 'success' && 'success' || 'failure' }}
       version: ${{ needs.publish.outputs.version || '' }}
-      custom_description: Published to open-reliquary
+      custom_description: Published to the configured Maven repository
     secrets:
       DISCORD_WEBHOOK_URL: ${{ secrets.PUBLIC_RELEASE_DISCORD_WEBHOOK }}
