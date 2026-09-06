@@ -25,8 +25,8 @@ jobs:
     permissions:
       contents: write
 
-  coverage-and-sonar:
-    name: Coverage & SonarCloud (main baseline)
+  coverage:
+    name: Coverage (main baseline)
     needs: version
     if: always() && !failure() && !cancelled()
     runs-on: ubuntu-latest
@@ -51,12 +51,6 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: build/reports/kover/report.xml
           fail_ci_if_error: false
-
-      - name: SonarCloud Scan
-        run: ./gradlew sonar --no-daemon
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   release:
     needs: version
@@ -95,7 +89,7 @@ jobs:
 
   notify-discord:
     name: Notify Discord
-    needs: [ version, release, coverage-and-sonar ]
+    needs: [ version, release, coverage ]
     if: always()
     uses: violabs/public-cicd/.github/workflows/notify-discord.yml@main
     with:
