@@ -268,8 +268,9 @@ Faults can also be added inside a `body` block alongside other elements.
 
 ## Publishing
 
-Publishing uses the standard Gradle `maven-publish` plugin. The target repository and
-its credentials are never committed — supply them as Gradle properties (for example in
+Publishing uses the standard Gradle `maven-publish` plugin and runs locally — CI bumps
+the version and cuts a release tag, but never publishes artifacts. The target repository
+and its credentials are never committed; supply them as Gradle properties (for example in
 `~/.gradle/gradle.properties`), `-P` flags, or environment variables:
 
 | Gradle property         | Environment variable   | Purpose                                     |

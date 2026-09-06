@@ -34,8 +34,8 @@ jobs:
       coverage-enabled: true
       min-coverage-overall: 90
 
-  coverage:
-    name: Coverage Upload
+  coverage-and-sonar:
+    name: Coverage Upload & SonarCloud
     needs: unit-tests
     runs-on: ubuntu-latest
     steps:
@@ -62,13 +62,19 @@ jobs:
           fail_ci_if_error: false
           verbose: true
 
+      - name: SonarCloud Scan
+        run: ./gradlew sonar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
   notify-discord:
     name: Notify Discord
     needs:
       - build-check
       - unit-tests
       - detekt-check
-      - coverage
+      - coverage-and-sonar
     if: always()
     uses: violabs/public-cicd/.github/workflows/notify-discord.yml@main
     with:

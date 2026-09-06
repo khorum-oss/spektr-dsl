@@ -4,6 +4,7 @@ plugins {
 	id("org.jetbrains.dokka") version "2.1.0"
 	id("org.jetbrains.dokka-javadoc") version "2.1.0"
 	id("org.jetbrains.kotlinx.kover") version "0.9.4"
+	id("org.sonarqube") version "7.0.0.6105"
 	`maven-publish`
 	signing
 }
@@ -135,4 +136,14 @@ detekt {
 	config.setFrom(files("$rootDir/detekt.yml"))
 	source.setFrom("src/main/kotlin")
 	parallel = true
+}
+
+sonar {
+	properties {
+		property("sonar.projectKey", "khorum-oss_spektr-dsl")
+		property("sonar.organization", "khorum-oss")
+		property("sonar.host.url", "https://sonarcloud.io")
+		property("sonar.coverage.jacoco.xmlReportPaths",
+			"${layout.buildDirectory.get()}/reports/kover/report.xml")
+	}
 }
